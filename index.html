@@ -178,6 +178,14 @@
   <!-- barra fixa de seleção (aparece só com seleção > 0) -->
   <div id="barra-selecao" class="barra-selecao" hidden>
     <span id="barra-contagem" class="pill"></span>
+    <label class="field">Abrir com
+      <select id="modo-envio-barra">
+        <option value="mailto">Meu app</option>
+        <option value="gmail">Gmail</option>
+        <option value="outlook">Outlook</option>
+        <option value="yahoo">Yahoo</option>
+      </select>
+    </label>
     <a id="barra-enviar" class="btn btn-primary" href="#">Enviar para os selecionados</a>
     <button id="barra-copiar" class="chip chip-ghost">Copiar e-mails</button>
     <button id="barra-limpar" class="chip chip-ghost">Limpar</button>
@@ -188,7 +196,9 @@
       Movimento popular de pressão parlamentar — cada visitante envia de seu próprio e-mail.
       Dados dos parlamentares: APIs públicas da
       <a href="https://dadosabertos.camara.leg.br" target="_blank" rel="noopener">Câmara</a> e do
-      <a href="https://legis.senado.leg.br/dadosabertos" target="_blank" rel="noopener">Senado</a>.
+      <a href="https://legis.senado.leg.br/dadosabertos" target="_blank" rel="noopener">Senado</a>;
+      cidades: <a href="https://servicodados.ibge.gov.br" target="_blank" rel="noopener">IBGE</a>.
+      Site 100% estático, <a href="https://github.com/PedroLuisBrilhadori/pressao-plp299" target="_blank" rel="noopener">código aberto no GitHub ↗</a>.
     </p>
   </footer>
 

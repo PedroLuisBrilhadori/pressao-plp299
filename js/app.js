@@ -19,6 +19,8 @@
 
   var MODOS_ENVIO = ['mailto', 'gmail', 'outlook', 'yahoo'];
 
+  var SITE_URL = 'https://plp299nao.pedroluisbrilhadori.com.br';
+
   var LS = {
     uf: 'plp299.uf',
     envio: 'plp299.envio',
@@ -351,15 +353,25 @@
   }
 
   // ---------- envio em lote (seção 3: bancada completa) ----------
+  /** Aplica o modo de envio e sincroniza os dois selects (seção 3 e barra). */
+  function setModoEnvio(valor) {
+    if (MODOS_ENVIO.indexOf(valor) === -1) return;
+    state.envio = valor;
+    salvarEnvio();
+    $('modo-envio').value = valor;
+    $('modo-envio-barra').value = valor;
+    renderChunks();
+    renderCards();
+  }
+
   function initBatch() {
-    var modo = $('modo-envio');
-    modo.value = state.envio;
-    modo.addEventListener('change', function () {
-      state.envio = modo.value;
-      salvarEnvio();
-      renderChunks();
-      renderCards();
-      renderLotePersonalizado();
+    $('modo-envio').value = state.envio;
+    $('modo-envio-barra').value = state.envio;
+    $('modo-envio').addEventListener('change', function () {
+      setModoEnvio(this.value);
+    });
+    $('modo-envio-barra').addEventListener('change', function () {
+      setModoEnvio(this.value);
     });
     $('reset-progresso').addEventListener('click', function () {
       state.enviados = {};
@@ -635,10 +647,10 @@
 
   // ---------- share ----------
   function initShare() {
-    var msg = 'Vote NÃO no PLP 299/2026 — envie um e-mail do seu próprio endereço para a bancada do seu estado: ';
-    $('whatsapp-share').href = 'https://wa.me/?text=' + encodeURIComponent(msg + window.location.href);
+    var msg = 'Vote NÃO no PLP 299/2026 — envie um e-mail do seu próprio endereço para a bancada do seu estado: ' + SITE_URL;
+    $('whatsapp-share').href = 'https://wa.me/?text=' + encodeURIComponent(msg);
     $('copy-site').addEventListener('click', function () {
-      copiarTexto(window.location.href, this);
+      copiarTexto(SITE_URL, this);
     });
   }
 

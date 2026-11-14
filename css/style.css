@@ -315,13 +315,20 @@ body { padding-bottom: 76px; }
   box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.45);
   animation: barra-sobe 0.25s ease;
 }
+.barra-selecao label.field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
 @keyframes barra-sobe {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
 }
 
-/* ---------- selects estilizados (Abrir com + filtros) ---------- */
-.batch-controls select, .filtros select {
+/* ---------- selects estilizados (Abrir com + filtros + barra) ---------- */
+.batch-controls select, .filtros select, .barra-selecao select {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -340,13 +347,13 @@ body { padding-bottom: 76px; }
   cursor: pointer;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
-.batch-controls select:hover, .filtros select:hover { border-color: var(--accent-2); }
-.batch-controls select:focus, .filtros select:focus {
+.batch-controls select:hover, .filtros select:hover, .barra-selecao select:hover { border-color: var(--accent-2); }
+.batch-controls select:focus, .filtros select:focus, .barra-selecao select:focus {
   outline: none;
   border-color: var(--accent-2);
   box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.25);
 }
-.batch-controls select option, .filtros select option {
+.batch-controls select option, .filtros select option, .barra-selecao select option {
   background: var(--bg-alt);
   color: var(--text);
   font-weight: 400;
