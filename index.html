@@ -160,7 +160,7 @@
       <p id="lista-contagem" class="hint"></p>
       <div id="parlamentares" class="cards"></div>
       <div id="lote-personalizado" class="batch-box batch-box-compacto" hidden>
-        <h3>Seu lote personalizado</h3>
+        <h3>Seu lote personalizado (mensagem longa demais para um e-mail único — envie em partes)</h3>
         <div id="chunks-selecao" class="chunks"></div>
       </div>
     </section>
@@ -174,6 +174,14 @@
       </div>
     </section>
   </main>
+
+  <!-- barra fixa de seleção (aparece só com seleção > 0) -->
+  <div id="barra-selecao" class="barra-selecao" hidden>
+    <span id="barra-contagem" class="pill"></span>
+    <a id="barra-enviar" class="btn btn-primary" href="#">Enviar para os selecionados</a>
+    <button id="barra-copiar" class="chip chip-ghost">Copiar e-mails</button>
+    <button id="barra-limpar" class="chip chip-ghost">Limpar</button>
+  </div>
 
   <footer>
     <p>

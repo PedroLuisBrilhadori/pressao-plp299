@@ -294,6 +294,32 @@ a { color: var(--accent-2); }
 .card-actions a, .card-actions button { flex: 1; text-align: center; }
 .card-casa { font-size: 0.72rem; color: var(--text-dim); }
 
+/* ---------- barra fixa de seleção ---------- */
+body { padding-bottom: 76px; }
+.barra-selecao {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 20px;
+  background: rgba(26, 33, 48, 0.96);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid var(--accent-2);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.45);
+  animation: barra-sobe 0.25s ease;
+}
+@keyframes barra-sobe {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
 /* ---------- share/footer ---------- */
 .share-row { display: flex; gap: 12px; flex-wrap: wrap; }
 footer { max-width: var(--maxw); margin: 0 auto; padding: 40px 24px; color: var(--text-dim); font-size: 0.85rem; }

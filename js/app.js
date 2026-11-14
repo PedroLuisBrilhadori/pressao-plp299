@@ -115,16 +115,58 @@
     });
   }
 
-  /** Atualiza pill da seção 4 e o lote personalizado embutido. */
+  /** Atualiza pill da seção 4 e a barra fixa de seleção (rodapé). */
   function atualizarControleSelecao() {
-    var total = selecaoPersonalizada().length;
+    var lista = selecaoPersonalizada();
+    var total = lista.length;
     var pill = $('selecao-status');
     pill.textContent = total === 0
       ? 'Nenhum selecionado — clique nos cards abaixo'
       : total + ' selecionado' + (total === 1 ? '' : 's');
     pill.classList.toggle('pill-vazia', total === 0);
-    $('lote-personalizado').hidden = total === 0;
-    renderLotePersonalizado();
+
+    var barra = $('barra-selecao');
+    var box = $('lote-personalizado');
+    if (!total) {
+      barra.hidden = true;
+      box.hidden = true;
+      return;
+    }
+    $('barra-contagem').textContent = total + ' selecionado' + (total === 1 ? '' : 's');
+    barra.hidden = false;
+    var btnEnviar = $('barra-enviar');
+    try {
+      btnEnviar.href = MAILTO.buildMensagem(state.envio, {
+        emails: lista.map(function (p) { return p.email; }),
+        subject: assuntoPara(lista[0], true),
+        body: corpoPara(lista[0], true)
+      });
+      btnEnviar.hidden = false;
+      box.hidden = true;
+    } catch (e) {
+      // URL estourou o limite (raro) — fallback: caixa com partes abaixo dos cards
+      btnEnviar.hidden = true;
+      box.hidden = false;
+      renderLotePersonalizado();
+    }
+  }
+
+  /** Cliques da barra fixa (limpar/copiar/enviar marcam como enviado). */
+  function initBarraSelecao() {
+    $('barra-limpar').addEventListener('click', function () {
+      state.selecao = {};
+      salvarSelecao();
+      atualizarControleSelecao();
+      renderCards();
+    });
+    $('barra-copiar').addEventListener('click', function () {
+      copiarTexto(selecaoPersonalizada().map(function (p) { return p.email; }).join(', '), this);
+    });
+    $('barra-enviar').addEventListener('click', function () {
+      selecaoPersonalizada().forEach(function (p) { state.enviados[p.email] = true; });
+      salvarProgresso();
+      setTimeout(renderCards, 600);
+    });
   }
 
   /** Bancada completa da UF (inclui quem não tem e-mail público —
@@ -659,6 +701,7 @@
   // ---------- boot ----------
   carregarEstado();
   initUf();
+  initBarraSelecao();
   initEditor();
   initBatch();
   initCards();
