@@ -95,3 +95,20 @@ test('countChunks reflete a UI', () => {
   assert.equal(MAILTO.countChunks(parlamentares), 6);
   assert.equal(MAILTO.countChunks(parlamentares, 70), 1);
 });
+
+test('porUf filtra pela UF e exclui registros sem e-mail', () => {
+  const mista = [
+    { nome: 'A', uf: 'SP', email: 'a@camara.leg.br' },
+    { nome: 'B', uf: 'MG', email: 'b@camara.leg.br' },
+    { nome: 'C', uf: 'SP', email: '' }, // sem e-mail público
+    { nome: 'D', uf: 'SP', email: 'd@senado.leg.br' }
+  ];
+  const sp = MAILTO.porUf(mista, 'SP');
+  assert.deepEqual(sp.map(p => p.email), ['a@camara.leg.br', 'd@senado.leg.br']);
+});
+
+test('porUf com UF vazia ou lista vazia devolve vazio (não quebra)', () => {
+  assert.deepEqual(MAILTO.porUf(parlamentares, ''), []);
+  assert.deepEqual(MAILTO.porUf(parlamentares, undefined), []);
+  assert.deepEqual(MAILTO.porUf([], 'SP'), []);
+});

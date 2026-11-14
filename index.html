@@ -9,12 +9,12 @@
 </head>
 <body>
   <header class="hero">
-    <p class="hero-tag">Campanha popular · São Paulo</p>
+    <p class="hero-tag">Campanha popular · vote NO no PLP 299/2026</p>
     <h1>O pacote fiscal passa só se passarem <em>de mansinho</em>.<br>Vamos avisar quem decide.</h1>
     <p class="hero-sub">
       O <strong>PLP 299/2026</strong> endurece o teto de gastos (2,5% → 2% acima da inflação)
       com impacto de até <strong>R$ 56 bi em 2027</strong>. O Senado já aprovou por 45×31.
-      Agora é na Câmara. Este site monta seus e-mails — <strong>você envia do seu próprio e-mail</strong>,
+      Este site monta seus e-mails para a <strong>bancada do seu estado</strong> — <strong>você envia do seu próprio e-mail</strong>,
       sem cadastro, sem servidor, sem intermediários.
     </p>
     <div class="hero-cta">
@@ -84,22 +84,31 @@
     </section>
 
     <section id="acao" class="section">
-      <h2>1. Personalize sua mensagem</h2>
+      <h2>1. Escolha seu estado</h2>
+      <p class="hint">Seus e-mails vão para a bancada completa da sua UF: deputados federais e os 3 senadores.</p>
+      <div class="uf-box">
+        <label>Seu estado
+          <select id="uf"><option value="">— selecione —</option></select>
+        </label>
+        <span id="uf-resumo" class="hint"></span>
+      </div>
+
+      <h2>2. Personalize sua mensagem</h2>
       <p class="hint">Sua identificação aumenta muito a chance de resposta. Os dados ficam salvos só no seu navegador (localStorage) — nada é enviado a servidor algum.</p>
       <div class="editor">
         <div class="editor-row">
           <label>Seu nome <input id="meu-nome" type="text" placeholder="Seu nome" autocomplete="name"></label>
-          <label>Sua cidade <input id="minha-cidade" type="text" placeholder="Sua cidade em SP" autocomplete="address-level2"></label>
+          <label>Sua cidade <input id="minha-cidade" type="text" placeholder="Sua cidade" autocomplete="address-level2"></label>
         </div>
         <label>Assunto <input id="assunto" type="text"></label>
         <label>Mensagem <textarea id="corpo" rows="14"></textarea></label>
         <div class="editor-actions">
-          <span class="placeholder-help">Placeholders: <code>{nome}</code> <code>{partido}</code> <code>{meu_nome}</code> <code>{minha_cidade}</code></span>
+          <span class="placeholder-help">Placeholders: <code>{nome}</code> <code>{partido}</code> <code>{uf}</code> <code>{meu_nome}</code> <code>{minha_cidade}</code></span>
           <button id="reset-template" class="btn btn-ghost btn-small">Restaurar texto padrão</button>
         </div>
       </div>
 
-      <h2>2. Envie em lote</h2>
+      <h2>3. Envie em lote</h2>
       <p class="hint">
         Os e-mails são divididos em lotes para não travar seu client de e-mail.
         Cada clique abre o e-mail já preenchido — <strong>confirme o envio</strong> e volte para clicar no próximo.
@@ -107,7 +116,7 @@
       </p>
       <div class="batch-box">
         <div class="batch-controls">
-          <label><input type="checkbox" id="incluir-senadores"> incluir os 3 senadores de SP</label>
+          <label><input type="checkbox" id="incluir-senadores"> incluir os 3 senadores do meu estado</label>
           <button id="copy-emails" class="btn btn-ghost btn-small">Copiar todos os e-mails</button>
           <button id="reset-progresso" class="btn btn-ghost btn-small">Zerar progresso</button>
         </div>
@@ -116,7 +125,7 @@
         <div id="chunks" class="chunks"></div>
       </div>
 
-      <h2>3. Ou envie individualmente</h2>
+      <h2>4. Ou envie individualmente</h2>
       <div class="filtros">
         <input id="busca" type="search" placeholder="Buscar por nome…">
         <select id="filtro-partido"><option value="">Todos os partidos</option></select>

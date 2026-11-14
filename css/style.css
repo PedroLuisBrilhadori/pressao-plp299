@@ -109,6 +109,27 @@ a { color: var(--accent-2); }
 }
 .quotes li a { font-style: normal; font-size: 0.78rem; }
 
+/* ---------- seletor de UF ---------- */
+.uf-box {
+  display: flex;
+  align-items: end;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+}
+.uf-box label { display: grid; gap: 6px; font-size: 0.88rem; color: var(--text-dim); }
+.uf-box select {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font: inherit;
+  min-width: 220px;
+}
+.uf-box select:focus { outline: 2px solid var(--accent-2); }
+.uf-box .hint { margin-bottom: 0; }
+
 /* ---------- editor ---------- */
 .editor {
   background: var(--card);

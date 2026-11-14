@@ -7,13 +7,25 @@
   var TPL = window.TEMPLATE_PADRAO;
   var PARLAMENTARES = window.PARLAMENTARES;
 
+  var UF_NOMES = {
+    AC: 'Acre', AL: 'Alagoas', AP: 'Amapá', AM: 'Amazonas', BA: 'Bahia',
+    CE: 'Ceará', DF: 'Distrito Federal', ES: 'Espírito Santo', GO: 'Goiás',
+    MA: 'Maranhão', MT: 'Mato Grosso', MS: 'Mato Grosso do Sul', MG: 'Minas Gerais',
+    PA: 'Pará', PB: 'Paraíba', PR: 'Paraná', PE: 'Pernambuco', PI: 'Piauí',
+    RJ: 'Rio de Janeiro', RN: 'Rio Grande do Norte', RS: 'Rio Grande do Sul',
+    RO: 'Rondônia', RR: 'Roraima', SC: 'Santa Catarina', SP: 'São Paulo',
+    SE: 'Sergipe', TO: 'Tocantins'
+  };
+
   var LS = {
+    uf: 'plp299.uf',
     template: 'plp299.template',
     perfil: 'plp299.perfil',
     progresso: 'plp299.progresso'
   };
 
   var state = {
+    uf: '',
     template: null, // {assunto, corpo} — null = padrão
     perfil: { meu_nome: '', minha_cidade: '' },
     enviados: {}, // chave "email" -> true
@@ -23,6 +35,8 @@
   // ---------- storage ----------
   function carregarEstado() {
     try {
+      var uf = localStorage.getItem(LS.uf);
+      if (uf && UF_NOMES[uf]) state.uf = uf;
       var t = localStorage.getItem(LS.template);
       if (t) state.template = JSON.parse(t);
       var p = localStorage.getItem(LS.perfil);
@@ -34,6 +48,9 @@
     }
   }
 
+  function salvarUf() {
+    try { localStorage.setItem(LS.uf, state.uf); } catch (e) { /* private mode */ }
+  }
   function salvarTemplate() {
     try { localStorage.setItem(LS.template, JSON.stringify(state.template)); } catch (e) { /* private mode */ }
   }
@@ -51,6 +68,7 @@
     return {
       nome: lote ? 'parlamentar(s)' : parlamentar.nome,
       partido: parlamentar.partido || '',
+      uf: state.uf || '',
       meu_nome: state.perfil.meu_nome || '',
       minha_cidade: state.perfil.minha_cidade || ''
     };
@@ -67,9 +85,74 @@
   }
 
   function todosSelecionados() {
-    var lista = PARLAMENTARES.deputados.slice();
-    if ($('incluir-senadores').checked) lista = lista.concat(PARLAMENTARES.senadores);
+    if (!state.uf) return [];
+    var lista = MAILTO.porUf(PARLAMENTARES.deputados, state.uf);
+    if ($('incluir-senadores').checked) {
+      lista = lista.concat(MAILTO.porUf(PARLAMENTARES.senadores, state.uf));
+    }
     return lista;
+  }
+
+  /** Bancada completa da UF (inclui quem não tem e-mail público —
+   * usada nos cards e no resumo; o lote usa todosSelecionados). */
+  function bancadaUf() {
+    if (!state.uf) return [];
+    var lista = PARLAMENTARES.deputados.filter(function (p) { return p.uf === state.uf; });
+    return lista.concat(PARLAMENTARES.senadores.filter(function (p) { return p.uf === state.uf; }));
+  }
+
+  // ---------- seletor de UF ----------
+  function initUf() {
+    var sel = $('uf');
+    Object.keys(UF_NOMES).forEach(function (sigla) {
+      var opt = document.createElement('option');
+      opt.value = sigla;
+      opt.textContent = sigla + ' — ' + UF_NOMES[sigla];
+      sel.appendChild(opt);
+    });
+    sel.value = state.uf;
+    atualizarResumoUf();
+    sel.addEventListener('change', function () {
+      state.uf = sel.value;
+      salvarUf();
+      atualizarResumoUf();
+      $('filtro-partido').value = '';
+      reconstruirPartidos();
+      renderChunks();
+      renderCards();
+    });
+  }
+
+  function reconstruirPartidos() {
+    var sel = $('filtro-partido');
+    var valorAtual = sel.value;
+    sel.innerHTML = '<option value="">Todos os partidos</option>';
+    var partidos = {};
+    bancadaUf().forEach(function (p) { partidos[p.partido] = true; });
+    Object.keys(partidos).sort().forEach(function (partido) {
+      var opt = document.createElement('option');
+      opt.value = partido;
+      opt.textContent = partido;
+      sel.appendChild(opt);
+    });
+    if (valorAtual && partidos[valorAtual]) sel.value = valorAtual;
+  }
+
+  function atualizarResumoUf() {
+    var alvo = $('uf-resumo');
+    if (!state.uf) {
+      alvo.textContent = 'Escolha seu estado para montar os e-mails da sua bancada.';
+      return;
+    }
+    var bancada = bancadaUf();
+    var nd = bancada.filter(function (p) { return p.casa === 'camara'; }).length;
+    var ns = bancada.filter(function (p) { return p.casa === 'senado'; }).length;
+    var semEmail = bancada.filter(function (p) { return !p.email; }).length;
+    var texto = UF_NOMES[state.uf] + ': ' + nd + ' deputados + ' + ns + ' senadores.';
+    if (semEmail) {
+      texto += ' (' + semEmail + ' sem e-mail público — envio só pela página oficial)';
+    }
+    alvo.textContent = texto;
   }
 
   // ---------- editor de template ----------
@@ -138,6 +221,11 @@
     var container = $('chunks');
     container.innerHTML = '';
     var lista = todosSelecionados();
+    if (!lista.length) {
+      container.innerHTML = '<p class="hint">Escolha seu estado no passo 1 para montar os lotes de envio.</p>';
+      renderProgresso(0);
+      return;
+    }
     var chunks = MAILTO.chunkRecipients(lista, state.chunkSize);
     var total = lista.length;
 
@@ -212,15 +300,7 @@
 
   // ---------- cards individuais ----------
   function initCards() {
-    var partidos = {};
-    todosSelecionados().forEach(function (p) { partidos[p.partido] = true; });
-    var sel = $('filtro-partido');
-    Object.keys(partidos).sort().forEach(function (partido) {
-      var opt = document.createElement('option');
-      opt.value = partido;
-      opt.textContent = partido;
-      sel.appendChild(opt);
-    });
+    reconstruirPartidos();
     $('busca').addEventListener('input', renderCards);
     $('filtro-partido').addEventListener('change', renderCards);
     $('filtro-casa').addEventListener('change', renderCards);
@@ -231,7 +311,7 @@
     var busca = $('busca').value.trim().toLowerCase();
     var partido = $('filtro-partido').value;
     var casa = $('filtro-casa').value;
-    var lista = todosSelecionados();
+    var lista = bancadaUf();
     return lista.filter(function (p) {
       if (partido && p.partido !== partido) return false;
       if (casa && p.casa !== casa) return false;
@@ -242,6 +322,11 @@
 
   function renderCards() {
     var container = $('parlamentares');
+    if (!state.uf) {
+      $('lista-contagem').textContent = 'Escolha seu estado no passo 1 para ver sua bancada.';
+      container.innerHTML = '';
+      return;
+    }
     var filtrada = listaFiltrada();
     $('lista-contagem').textContent = filtrada.length + ' parlamentares listados.';
     container.innerHTML = '';
@@ -275,25 +360,34 @@
       var actions = document.createElement('div');
       actions.className = 'card-actions';
 
-      var btnMail = document.createElement('a');
-      try {
-        btnMail.href = MAILTO.buildMailto({
-          emails: [p.email],
-          subject: assuntoPara(p, false),
-          body: corpoPara(p, false)
+      var btnMail;
+      if (p.email) {
+        btnMail = document.createElement('a');
+        try {
+          btnMail.href = MAILTO.buildMailto({
+            emails: [p.email],
+            subject: assuntoPara(p, false),
+            body: corpoPara(p, false)
+          });
+        } catch (e) { btnMail.href = 'mailto:' + p.email; }
+        btnMail.className = 'btn btn-small ' + (enviado ? 'btn sent' : 'btn-primary');
+        btnMail.textContent = enviado ? '✓ Reenviar' : 'Enviar e-mail';
+        btnMail.addEventListener('click', function () {
+          state.enviados[p.email] = true;
+          salvarProgresso();
+          setTimeout(function () {
+            btnMail.className = 'btn btn-small btn sent';
+            btnMail.textContent = '✓ Reenviar';
+            renderProgresso(todosSelecionados().length);
+          }, 600);
         });
-      } catch (e) { btnMail.href = 'mailto:' + p.email; }
-      btnMail.className = 'btn btn-small ' + (enviado ? 'btn sent' : 'btn-primary');
-      btnMail.textContent = enviado ? '✓ Reenviar' : 'Enviar e-mail';
-      btnMail.addEventListener('click', function () {
-        state.enviados[p.email] = true;
-        salvarProgresso();
-        setTimeout(function () {
-          btnMail.className = 'btn btn-small btn sent';
-          btnMail.textContent = '✓ Reenviar';
-          renderProgresso(todosSelecionados().length);
-        }, 600);
-      });
+      } else {
+        btnMail = document.createElement('span');
+        btnMail.className = 'btn btn-small btn-ghost';
+        btnMail.style.pointerEvents = 'none';
+        btnMail.style.opacity = '0.55';
+        btnMail.textContent = 'Sem e-mail público';
+      }
 
       var btnPagina = document.createElement('a');
       btnPagina.className = 'btn btn-ghost btn-small';
@@ -364,6 +458,7 @@
 
   // ---------- boot ----------
   carregarEstado();
+  initUf();
   initEditor();
   initBatch();
   initCards();

@@ -27,6 +27,15 @@
     return e.toLowerCase();
   }
 
+  /** Filtra a bancada de uma UF (exclui registros sem e-mail público).
+   * UF vazia/ausente devolve lista vazia. */
+  function porUf(parlamentares, uf) {
+    if (!uf) return [];
+    return (parlamentares || []).filter(function (p) {
+      return p.uf === uf && p.email;
+    });
+  }
+
   /** Divide a lista de parlamentares em lotes para envio sequencial. */
   function chunkRecipients(parlamentares, size) {
     var n = size || CHUNK_SIZE;
@@ -75,6 +84,7 @@
     CHUNK_SIZE: CHUNK_SIZE,
     MAX_URL_LENGTH: MAX_URL_LENGTH,
     normalizarEmail: normalizarEmail,
+    porUf: porUf,
     chunkRecipients: chunkRecipients,
     renderTemplate: renderTemplate,
     buildMailto: buildMailto,
