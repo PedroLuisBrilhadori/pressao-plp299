@@ -15,6 +15,8 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+[hidden] { display: none !important; }
+
 html { scroll-behavior: smooth; }
 
 body {
@@ -175,7 +177,7 @@ a { color: var(--accent-2); }
   margin-bottom: 32px;
 }
 .editor label { display: grid; gap: 6px; font-size: 0.88rem; color: var(--text-dim); }
-.editor input, .editor textarea, .filtros input, .filtros select {
+.editor input, .editor textarea, .editor select, .filtros input, .filtros select {
   background: var(--bg);
   color: var(--text);
   border: 1px solid var(--border);
@@ -183,11 +185,11 @@ a { color: var(--accent-2); }
   padding: 10px 12px;
   font: inherit;
 }
-.editor input:focus, .editor textarea:focus, .filtros input:focus, .filtros select:focus {
+.editor input:focus, .editor textarea:focus, .editor select:focus, .filtros input:focus, .filtros select:focus {
   outline: 2px solid var(--accent-2);
 }
 .editor textarea { resize: vertical; }
-.editor-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.editor-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
 .editor-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .placeholder-help { font-size: 0.8rem; color: var(--text-dim); }
 .placeholder-help code { background: var(--bg); padding: 2px 6px; border-radius: 4px; }

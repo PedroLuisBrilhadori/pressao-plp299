@@ -6,7 +6,8 @@
   "type": "commonjs",
   "scripts": {
     "test": "node --test",
-    "check": "node scripts/gerar-dados.mjs --check",
-    "regenerar-dados": "node scripts/gerar-dados.mjs"
+    "check": "node scripts/gerar-dados.mjs --check && node scripts/gerar-cidades.mjs --check",
+    "regenerar-dados": "node scripts/gerar-dados.mjs",
+    "regenerar-cidades": "node scripts/gerar-cidades.mjs"
   }
 }

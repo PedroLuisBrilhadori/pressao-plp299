@@ -38,6 +38,12 @@ data.js) — usado para destacar alvos persuasivos no site. Parlamentares sem
 e-mail público (ex.: 2 senadores hoje) aparecem no site com card "sem e-mail
 público", direcionados só à página oficial.
 
+As cidades do seletor vêm do IBGE (`js/cidades.js`, 5.571 municípios):
+
+```bash
+pnpm regenerar-cidades   # reescreve js/cidades.js a partir da API do IBGE
+```
+
 ## Deploy (Cloudflare Pages, por tag)
 
 `scripts/deploy.sh` roda `wrangler pages deploy` — mesmo padrão do

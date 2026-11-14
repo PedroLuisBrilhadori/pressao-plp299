@@ -150,6 +150,13 @@
       state.uf = sel.value;
       salvarUf();
       atualizarResumoUf();
+      // cidade pertence ao estado — limpa se não existir na nova UF
+      if (state.perfil.minha_cidade && window.CIDADES &&
+          (window.CIDADES[state.uf] || []).indexOf(state.perfil.minha_cidade) === -1) {
+        state.perfil.minha_cidade = '';
+        salvarPerfil();
+      }
+      popularCidades();
       $('filtro-partido').value = '';
       reconstruirPartidos();
       renderChunks();
@@ -190,16 +197,67 @@
   }
 
   // ---------- editor de template ----------
+  var CIDADE_OUTRA = '__outra__';
+
+  /** Popula o select de cidades conforme o estado escolhido. Restaura a
+   * cidade salva se existir na lista; se não, abre o campo "Outra…". */
+  function popularCidades() {
+    var sel = $('cidade-select');
+    var wrap = $('cidade-outra-wrap');
+    var input = $('minha-cidade');
+    sel.innerHTML = '';
+    if (!state.uf || !window.CIDADES || !window.CIDADES[state.uf]) {
+      sel.disabled = true;
+      var opt0 = document.createElement('option');
+      opt0.value = '';
+      opt0.textContent = '— escolha o estado no passo 1 —';
+      sel.appendChild(opt0);
+      wrap.hidden = true;
+      return;
+    }
+    sel.disabled = false;
+    var opt = document.createElement('option');
+    opt.value = '';
+    opt.textContent = '— selecione —';
+    sel.appendChild(opt);
+    window.CIDADES[state.uf].forEach(function (nome) {
+      var o = document.createElement('option');
+      o.value = nome;
+      o.textContent = nome;
+      sel.appendChild(o);
+    });
+    var outra = document.createElement('option');
+    outra.value = CIDADE_OUTRA;
+    outra.textContent = 'Outra… (digitar)';
+    sel.appendChild(outra);
+
+    var salva = state.perfil.minha_cidade || '';
+    var naLista = window.CIDADES[state.uf].indexOf(salva) !== -1;
+    if (salva && naLista) {
+      sel.value = salva;
+      wrap.hidden = true;
+    } else if (salva) {
+      sel.value = CIDADE_OUTRA;
+      wrap.hidden = false;
+      input.value = salva;
+    } else {
+      sel.value = '';
+      wrap.hidden = true;
+      input.value = '';
+    }
+  }
+
   function initEditor() {
     var assunto = $('assunto');
     var corpo = $('corpo');
     var nome = $('meu-nome');
-    var cidade = $('minha-cidade');
+    var cidadeSelect = $('cidade-select');
+    var cidadeInput = $('minha-cidade');
 
     assunto.value = (state.template && state.template.assunto) || TPL.assunto;
     corpo.value = (state.template && state.template.corpo) || TPL.corpo;
     nome.value = state.perfil.meu_nome || '';
-    cidade.value = state.perfil.minha_cidade || '';
+    popularCidades();
 
     function aoDigitar() {
       var padrãoOuCustom = { assunto: assunto.value, corpo: corpo.value };
@@ -214,13 +272,31 @@
     corpo.addEventListener('input', aoDigitar);
 
     function aoDigitarPerfil() {
-      state.perfil = { meu_nome: nome.value, minha_cidade: cidade.value };
+      // cidade: a do select manda; o input só vale no modo "Outra…"
+      var cidade = !$('cidade-outra-wrap').hidden ? cidadeInput.value : state.perfil.minha_cidade;
+      state.perfil = { meu_nome: nome.value, minha_cidade: cidade || '' };
       salvarPerfil();
       renderChunks();
       renderCards();
     }
     nome.addEventListener('input', aoDigitarPerfil);
-    cidade.addEventListener('input', aoDigitarPerfil);
+    cidadeInput.addEventListener('input', aoDigitarPerfil);
+
+    cidadeSelect.addEventListener('change', function () {
+      if (cidadeSelect.value === CIDADE_OUTRA) {
+        $('cidade-outra-wrap').hidden = false;
+        state.perfil.minha_cidade = cidadeInput.value;
+        salvarPerfil();
+        cidadeInput.focus();
+        return;
+      }
+      $('cidade-outra-wrap').hidden = true;
+      cidadeInput.value = '';
+      state.perfil.minha_cidade = cidadeSelect.value;
+      salvarPerfil();
+      renderChunks();
+      renderCards();
+    });
 
     $('reset-template').addEventListener('click', function () {
       assunto.value = TPL.assunto;
