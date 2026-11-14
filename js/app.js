@@ -164,7 +164,8 @@
     $('barra-copiar').addEventListener('click', function () {
       copiarTexto(selecaoPersonalizada().map(function (p) { return p.email; }).join(', '), this);
     });
-    $('barra-enviar').addEventListener('click', function () {
+    $('barra-enviar').addEventListener('click', function (ev) {
+      if (envioBloqueado(ev)) return;
       selecaoPersonalizada().forEach(function (p) { state.enviados[p.email] = true; });
       salvarProgresso();
       setTimeout(renderCards, 600);
@@ -201,6 +202,7 @@
         salvarPerfil();
       }
       popularCidades();
+      limparErroCampo();
       $('filtro-partido').value = '';
       reconstruirPartidos();
       renderChunks();
@@ -320,6 +322,7 @@
       var cidade = !$('cidade-outra-wrap').hidden ? cidadeInput.value : state.perfil.minha_cidade;
       state.perfil = { meu_nome: nome.value, minha_cidade: cidade || '' };
       salvarPerfil();
+      limparErroCampo();
       renderChunks();
       renderCards();
     }
@@ -338,6 +341,7 @@
       cidadeInput.value = '';
       state.perfil.minha_cidade = cidadeSelect.value;
       salvarPerfil();
+      limparErroCampo();
       renderChunks();
       renderCards();
     });
@@ -398,7 +402,8 @@
     var sub = document.createElement('small');
     sub.textContent = lista.length + (lista.length === 1 ? ' destinatário' : ' destinatários');
     btn.appendChild(sub);
-    btn.addEventListener('click', function () {
+    btn.addEventListener('click', function (ev) {
+      if (envioBloqueado(ev)) return;
       lista.forEach(function (p) { state.enviados[p.email] = true; });
       salvarProgresso();
       setTimeout(aoClicar || function () { renderChunks(); renderCards(); }, 600);
@@ -602,7 +607,8 @@
         } catch (e) { btnMail.href = 'mailto:' + p.email; }
         btnMail.className = 'btn btn-small ' + (enviado ? 'btn sent' : 'btn-primary');
         btnMail.textContent = enviado ? '✓ Reenviar' : 'Enviar e-mail';
-        btnMail.addEventListener('click', function () {
+        btnMail.addEventListener('click', function (ev) {
+          if (envioBloqueado(ev)) return;
           state.enviados[p.email] = true;
           salvarProgresso();
           setTimeout(function () {
@@ -647,15 +653,60 @@
 
   // ---------- share ----------
   function initShare() {
-    var msg = 'Vote NÃO no PLP 299/2026 — envie um e-mail do seu próprio endereço para a bancada do seu estado: ' + SITE_URL;
-    $('whatsapp-share').href = 'https://wa.me/?text=' + encodeURIComponent(msg);
-    $('copy-site').addEventListener('click', function () {
+    var texto = 'Vote NÃO no PLP 299/2026 — envie um e-mail do seu próprio endereço para a bancada do seu estado: ' + SITE_URL;
+    $('share-whatsapp').href = 'https://wa.me/?text=' + encodeURIComponent(texto);
+    $('share-telegram').href = 'https://t.me/share/url?url=' + encodeURIComponent(SITE_URL) +
+      '&text=' + encodeURIComponent('Vote NÃO no PLP 299/2026 — pressione a bancada do seu estado');
+    $('share-x').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(texto);
+    $('share-facebook').href = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(SITE_URL);
+    $('share-bluesky').href = 'https://bsky.app/intent/compose?text=' + encodeURIComponent(texto);
+    $('share-copy').addEventListener('click', function () {
       copiarTexto(SITE_URL, this);
     });
   }
 
-  function copiarTexto(texto, btn) {
-    function feedback() {
+  // ---------- validação do perfil (estado/nome/cidade) ----------
+  /** Lista de campos faltantes. Vazio = pode enviar. */
+  function camposFaltantes() {
+    var faltando = [];
+    if (!state.uf) faltando.push('estado');
+    if (!(state.perfil.meu_nome || '').trim()) faltando.push('seu nome');
+    if (!(state.perfil.minha_cidade || '').trim()) faltando.push('sua cidade');
+    return faltando;
+  }
+
+  /** Gate de envio: bloqueia (true) se faltar campo, destacando os inputs
+   * e mostrando o aviso no editor. Chame no click dos botões de envio
+   * com ev.preventDefault() quando retornar true. */
+  function envioBloqueado(ev) {
+    var faltando = camposFaltantes();
+    var alvoCidade = $('cidade-outra-wrap').hidden ? $('cidade-select') : $('minha-cidade');
+    $('uf').classList.toggle('campo-erro', !state.uf);
+    $('meu-nome').classList.toggle('campo-erro', !(state.perfil.meu_nome || '').trim());
+    alvoCidade.classList.toggle('campo-erro', !(state.perfil.minha_cidade || '').trim());
+    var aviso = $('aviso-perfil');
+    if (faltando.length) {
+      aviso.textContent = '⚠ Antes de enviar, complete: ' + faltando.join(', ') + '.';
+      aviso.hidden = false;
+      $('editor-perfil').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (ev) ev.preventDefault();
+      return true;
+    }
+    aviso.hidden = true;
+    return false;
+  }
+
+  /** Limpa o destaque de erro de um campo quando o usuário corrige. */
+  function limparErroCampo() {
+    var aviso = $('aviso-perfil');
+    $('uf').classList.remove('campo-erro');
+    $('meu-nome').classList.remove('campo-erro');
+    $('cidade-select').classList.remove('campo-erro');
+    $('minha-cidade').classList.remove('campo-erro');
+    if (!camposFaltantes().length) aviso.hidden = true;
+  }
+
+  function copiarTexto(texto, btn) {    function feedback() {
       if (!btn) return;
       var original = btn.textContent;
       btn.textContent = '✓ Copiado!';

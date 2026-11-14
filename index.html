@@ -96,7 +96,8 @@
 
       <h2>2. Personalize sua mensagem</h2>
       <p class="hint">Sua identificação aumenta muito a chance de resposta. Os dados ficam salvos só no seu navegador (localStorage) — nada é enviado a servidor algum.</p>
-      <div class="editor">
+      <div class="editor" id="editor-perfil">
+        <p id="aviso-perfil" class="aviso-erro" hidden></p>
         <div class="editor-row">
           <label>Seu nome <input id="meu-nome" type="text" placeholder="Seu nome" autocomplete="name"></label>
           <label>Sua cidade
@@ -167,10 +168,14 @@
 
     <section id="share" class="section section-alt">
       <h2>Amplie a campanha</h2>
-      <p class="hint">Quanto mais gente enviar, mais gabinete sente. Compartilhe este site:</p>
-      <div class="share-row">
-        <a id="whatsapp-share" class="btn btn-primary" target="_blank" rel="noopener">Compartilhar no WhatsApp</a>
-        <button id="copy-site" class="btn btn-ghost">Copiar link do site</button>
+      <p class="hint">Quanto mais gente enviar, mais gabinete sente. Compartilhe por onde você anda:</p>
+      <div class="share-grid">
+        <a id="share-whatsapp" class="share-btn" target="_blank" rel="noopener"><span class="share-icone">💬</span> WhatsApp</a>
+        <a id="share-telegram" class="share-btn" target="_blank" rel="noopener"><span class="share-icone">✈️</span> Telegram</a>
+        <a id="share-x" class="share-btn" target="_blank" rel="noopener"><span class="share-icone">𝕏</span> X / Twitter</a>
+        <a id="share-facebook" class="share-btn" target="_blank" rel="noopener"><span class="share-icone">📘</span> Facebook</a>
+        <a id="share-bluesky" class="share-btn" target="_blank" rel="noopener"><span class="share-icone">🦋</span> Bluesky</a>
+        <button id="share-copy" class="share-btn share-btn-ghost"><span class="share-icone">🔗</span> Copiar link</button>
       </div>
     </section>
   </main>
