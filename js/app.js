@@ -100,37 +100,31 @@
     return MAILTO.renderTemplate(tpl, varsPara(parlamentar, lote));
   }
 
-  function todosSelecionados() {
+  /** Bancada completa com e-mail — alvo do lote da seção 3. */
+  function bancadaParaLote() {
     if (!state.uf) return [];
-    // lote personalizado: só quem o usuário marcou nos cards (senadores
-    // entram pela seleção individual; o checkbox de senadores vale no modo padrão)
-    if ($('usar-selecao').checked) {
-      return bancadaUf().filter(function (p) {
-        return p.email && state.selecao[p.email];
-      });
-    }
-    var lista = MAILTO.porUf(PARLAMENTARES.deputados, state.uf);
-    if ($('incluir-senadores').checked) {
-      lista = lista.concat(MAILTO.porUf(PARLAMENTARES.senadores, state.uf));
-    }
-    return lista;
+    return MAILTO.porUf(PARLAMENTARES.deputados, state.uf)
+      .concat(MAILTO.porUf(PARLAMENTARES.senadores, state.uf));
   }
 
-  /** Atualiza contador/desabilitar do modo personalizado e o status na seção 4. */
+  /** Seleção personalizada (lote da seção 4): quem o usuário marcou. */
+  function selecaoPersonalizada() {
+    if (!state.uf) return [];
+    return bancadaUf().filter(function (p) {
+      return p.email && state.selecao[p.email];
+    });
+  }
+
+  /** Atualiza pill da seção 4 e o lote personalizado embutido. */
   function atualizarControleSelecao() {
-    var total = Object.keys(state.selecao).length;
-    $('selecao-contagem').textContent = total;
-    var chk = $('usar-selecao');
-    if (total === 0) {
-      chk.checked = false;
-      chk.disabled = true;
-    } else {
-      chk.disabled = false;
-    }
-    $('selecao-status').textContent = total === 0
-      ? 'Nenhum parlamentar selecionado — marque “incluir no lote” nos cards abaixo.'
-      : total + ' no lote personalizado.';
-    void chk; // estado do checkbox lido via DOM em todosSelecionados()
+    var total = selecaoPersonalizada().length;
+    var pill = $('selecao-status');
+    pill.textContent = total === 0
+      ? 'Nenhum selecionado — clique nos cards abaixo'
+      : total + ' selecionado' + (total === 1 ? '' : 's');
+    pill.classList.toggle('pill-vazia', total === 0);
+    $('lote-personalizado').hidden = total === 0;
+    renderLotePersonalizado();
   }
 
   /** Bancada completa da UF (inclui quem não tem e-mail público —
@@ -152,24 +146,15 @@
     });
     sel.value = state.uf;
     atualizarResumoUf();
-    atualizarSenadoresLabel();
     sel.addEventListener('change', function () {
       state.uf = sel.value;
       salvarUf();
       atualizarResumoUf();
-      atualizarSenadoresLabel();
       $('filtro-partido').value = '';
       reconstruirPartidos();
       renderChunks();
       renderCards();
     });
-  }
-
-  /** Label do checkbox de senadores reflete o estado escolhido. */
-  function atualizarSenadoresLabel() {
-    $('senadores-label').textContent = state.uf
-      ? 'incluir os 3 senadores do estado (' + UF_NOMES[state.uf] + ')'
-      : 'incluir os 3 senadores do meu estado';
   }
 
   function reconstruirPartidos() {
@@ -247,7 +232,7 @@
     });
   }
 
-  // ---------- envio em lote ----------
+  // ---------- envio em lote (seção 3: bancada completa) ----------
   function initBatch() {
     var modo = $('modo-envio');
     modo.value = state.envio;
@@ -256,14 +241,7 @@
       salvarEnvio();
       renderChunks();
       renderCards();
-    });
-    $('incluir-senadores').addEventListener('change', function () {
-      renderChunks();
-      renderCards();
-    });
-    $('usar-selecao').addEventListener('change', function () {
-      renderChunks();
-      renderCards();
+      renderLotePersonalizado();
     });
     $('reset-progresso').addEventListener('click', function () {
       state.enviados = {};
@@ -272,71 +250,64 @@
       renderCards();
     });
     $('copy-emails').addEventListener('click', function () {
-      var emails = todosSelecionados().map(function (p) { return p.email; });
+      var emails = bancadaParaLote().map(function (p) { return p.email; });
       copiarTexto(emails.join(', '), this);
     });
     atualizarControleSelecao();
     renderChunks();
   }
 
+  /** Cria o botão de envio (único ou parte) num container. */
+  function criarBotaoUnico(container, lista, url, label, aoClicar) {
+    var grupo = document.createElement('span');
+    grupo.className = 'chunk-group';
+    var btn = document.createElement('a');
+    btn.className = 'btn chunk-btn btn-primary';
+    btn.href = url;
+    btn.textContent = label;
+    var sub = document.createElement('small');
+    sub.textContent = lista.length + (lista.length === 1 ? ' destinatário' : ' destinatários');
+    btn.appendChild(sub);
+    btn.addEventListener('click', function () {
+      lista.forEach(function (p) { state.enviados[p.email] = true; });
+      salvarProgresso();
+      setTimeout(aoClicar || function () { renderChunks(); renderCards(); }, 600);
+    });
+    grupo.appendChild(btn);
+    grupo.appendChild(criarBotaoCopiar(lista, btn));
+    container.appendChild(grupo);
+  }
+
   function renderChunks() {
     var container = $('chunks');
     container.innerHTML = '';
-    var lista = todosSelecionados();
+    var lista = bancadaParaLote();
     if (!lista.length) {
       container.innerHTML = '<p class="hint">Escolha seu estado no passo 1 para montar os lotes de envio.</p>';
       renderProgresso(0);
       return;
     }
-    var chunks = MAILTO.chunkRecipients(lista, state.chunkSize);
-    var total = lista.length;
-
-    chunks.forEach(function (chunk, i) {
-      var enviadosNoChunk = chunk.filter(function (p) { return state.enviados[p.email]; }).length;
-      var completo = enviadosNoChunk === chunk.length;
-      var url;
-      try {
-        url = MAILTO.buildMensagem(state.envio, {
+    try {
+      var url = MAILTO.buildMensagem(state.envio, {
+        emails: lista.map(function (p) { return p.email; }),
+        subject: assuntoPara(lista[0], true),
+        body: corpoPara(lista[0], true)
+      });
+      criarBotaoUnico(container, lista, url, 'Enviar para todos de uma vez');
+    } catch (e) {
+      // URL estourou o limite (raro) — fallback em partes balanceadas
+      container.innerHTML = '<p class="hint">Sua mensagem + bancada são grandes demais para um e-mail único — envie pelas partes abaixo:</p>';
+      var partes = MAILTO.chunkRecipients(lista, state.chunkSize);
+      partes.forEach(function (chunk, i) {
+        var urlParte = MAILTO.buildMensagem(state.envio, {
           emails: chunk.map(function (p) { return p.email; }),
           subject: assuntoPara(chunk[0], true),
           body: corpoPara(chunk[0], true)
         });
-      } catch (e) {
-        // URL muito longa — divide o chunk ao meio (guard de segurança)
-        if (chunk.length > 1) {
-          var meio = Math.ceil(chunk.length / 2);
-          var metades = MAILTO.chunkRecipients(chunk, meio);
-          metades.forEach(function (m, j) {
-            var btn = criarBotaoChunk(m, i + '/' + j, container);
-            void btn;
-          });
-          return;
-        }
-        throw e;
-      }
-      var grupo = document.createElement('span');
-      grupo.className = 'chunk-group';
-      var btn = document.createElement('a');
-      btn.className = 'btn chunk-btn ' + (completo ? 'btn sent' : 'btn-primary');
-      btn.href = url;
-      btn.textContent = 'Enviar parte ' + (i + 1) + ' de ' + chunks.length;
-      var sub = document.createElement('small');
-      sub.textContent = (completo ? '✓ enviado · ' : '') + chunk.length + (chunk.length === 1 ? ' destinatário' : ' destinatários');
-      btn.appendChild(sub);
-      btn.addEventListener('click', function () {
-        chunk.forEach(function (p) {
-          state.enviados[p.email] = true;
-        });
-        salvarProgresso();
-        // deixa o client de e-mail abrir antes de re-renderizar
-        setTimeout(function () { renderChunks(); renderCards(); }, 600);
+        criarBotaoUnico(container, chunk, urlParte, 'Enviar parte ' + (i + 1) + ' de ' + partes.length);
       });
-      grupo.appendChild(btn);
-      grupo.appendChild(criarBotaoCopiar(chunk, btn));
-      container.appendChild(grupo);
-    });
-
-    renderProgresso(total);
+    }
+    renderProgresso(lista.length);
   }
 
   /** Fallback por parte: copia os e-mails do chunk (p/ quando o navegador
@@ -353,22 +324,36 @@
     return copiar;
   }
 
-  function criarBotaoChunk(chunk, label, container) {
-    var url = MAILTO.buildMensagem(state.envio, {
-      emails: chunk.map(function (p) { return p.email; }),
-      subject: assuntoPara(chunk[0], true),
-      body: corpoPara(chunk[0], true)
-    });
-    var btn = document.createElement('a');
-    btn.className = 'btn btn-primary chunk-btn';
-    btn.href = url;
-    btn.textContent = 'Enviar parte ' + label;
-    container.appendChild(btn);
-    return btn;
+  /** Lote personalizado (seção 4): botão único com a seleção do usuário,
+   * fallback em partes só se a URL estourar o limite. */
+  function renderLotePersonalizado() {
+    var container = $('chunks-selecao');
+    if (!container) return;
+    container.innerHTML = '';
+    var lista = selecaoPersonalizada();
+    if (!lista.length) return;
+    try {
+      var url = MAILTO.buildMensagem(state.envio, {
+        emails: lista.map(function (p) { return p.email; }),
+        subject: assuntoPara(lista[0], true),
+        body: corpoPara(lista[0], true)
+      });
+      criarBotaoUnico(container, lista, url, 'Enviar para os selecionados', renderCards);
+    } catch (e) {
+      var partes = MAILTO.chunkRecipients(lista, state.chunkSize);
+      partes.forEach(function (chunk, i) {
+        var urlParte = MAILTO.buildMensagem(state.envio, {
+          emails: chunk.map(function (p) { return p.email; }),
+          subject: assuntoPara(chunk[0], true),
+          body: corpoPara(chunk[0], true)
+        });
+        criarBotaoUnico(container, chunk, urlParte, 'Enviar parte ' + (i + 1) + ' de ' + partes.length, renderCards);
+      });
+    }
   }
 
   function renderProgresso(total) {
-    var lista = todosSelecionados();
+    var lista = bancadaParaLote();
     var enviados = lista.filter(function (p) { return state.enviados[p.email]; }).length;
     var pct = total ? Math.round((enviados / total) * 100) : 0;
     $('progress-fill').style.width = pct + '%';
@@ -399,6 +384,20 @@
       renderCards();
     });
     renderCards();
+  }
+
+  /** Card inteiro é clicável para seleção (links/botões dentro do card
+   * não disparam seleção). */
+  function toggleSelecaoCard(card, p) {
+    if (state.selecao[p.email]) {
+      delete state.selecao[p.email];
+      card.classList.remove('selecionado');
+    } else {
+      state.selecao[p.email] = true;
+      card.classList.add('selecionado');
+    }
+    salvarSelecao();
+    atualizarControleSelecao();
   }
 
   function listaFiltrada() {
@@ -432,6 +431,12 @@
 
       var card = document.createElement('div');
       card.className = 'card' + (noLote ? ' selecionado' : '');
+      if (p.email) {
+        card.addEventListener('click', function (ev) {
+          if (ev.target.closest('a, button')) return;
+          toggleSelecaoCard(card, p);
+        });
+      }
 
       var head = document.createElement('div');
       head.className = 'card-head';
@@ -494,31 +499,18 @@
       actions.appendChild(btnMail);
       actions.appendChild(btnPagina);
 
-      // seleção para o lote personalizado
-      var lote = document.createElement('label');
-      lote.className = 'card-lote';
-      var chkLote = document.createElement('input');
-      chkLote.type = 'checkbox';
-      chkLote.checked = noLote;
-      if (!p.email) chkLote.disabled = true;
-      chkLote.addEventListener('change', function () {
-        if (chkLote.checked) {
-          state.selecao[p.email] = true;
-        } else {
-          delete state.selecao[p.email];
-        }
-        salvarSelecao();
-        card.classList.toggle('selecionado', chkLote.checked);
-        atualizarControleSelecao();
-      });
-      lote.appendChild(chkLote);
-      lote.appendChild(document.createTextNode(' incluir no lote'));
+      // badge de seleção no canto do card (lote personalizado) — só quem tem e-mail
+      if (p.email) {
+        var badge = document.createElement('span');
+        badge.className = 'card-check';
+        badge.textContent = '✓';
+        card.appendChild(badge);
+      }
 
       card.appendChild(head);
       card.appendChild(casaEl);
       card.appendChild(email);
       card.appendChild(actions);
-      card.appendChild(lote);
       container.appendChild(card);
     });
   }

@@ -14,13 +14,36 @@ const parlamentares = Array.from({ length: 70 }, (_, i) => ({
   casa: 'camara'
 }));
 
-test('chunkRecipients divide em lotes de 12 e preserva a lista', () => {
-  const chunks = MAILTO.chunkRecipients(parlamentares);
-  assert.equal(chunks.length, 6); // 70 = 12*5 + 10
-  assert.equal(chunks[0].length, 12);
-  assert.equal(chunks[5].length, 10);
+test('chunkRecipients divide em lotes balanceados e preserva a lista', () => {
+  const chunks = MAILTO.chunkRecipients(parlamentares); // 70, teto 12
+  assert.equal(chunks.length, 6);
+  // balanceado: 70 = 4×12 + 2×11 (diferença máx. 1 entre lotes)
+  assert.deepEqual(chunks.map(c => c.length), [12, 12, 12, 12, 11, 11]);
   const total = chunks.reduce((acc, c) => acc + c.length, 0);
   assert.equal(total, 70);
+});
+
+test('chunkRecipients nunca deixa lote solitário (caso SP: 73)', () => {
+  const sp73 = Array.from({ length: 73 }, (_, i) => ({
+    nome: `Deputado ${i + 1}`, partido: 'TESTE', email: `dep${i}@camara.leg.br`
+  }));
+  const chunks = MAILTO.chunkRecipients(sp73);
+  assert.equal(chunks.length, 7);
+  assert.deepEqual(chunks.map(c => c.length), [11, 11, 11, 10, 10, 10, 10]);
+  const menores = chunks.map(c => c.length).filter(n => n === 1);
+  assert.equal(menores.length, 0);
+});
+
+test('bancada inteira de 73 + corpo real da campanha cabe numa URL única', () => {
+  const TEMPLATE_PADRAO = globalThis.TEMPLATE_PADRAO;
+  const url = MAILTO.buildMensagem('gmail', {
+    emails: parlamentares.concat([{ email: 'sen1@senado.leg.br' }, { email: 'sen2@senado.leg.br' }, { email: 'sen3@senado.leg.br' }]).map(p => p.email),
+    subject: TEMPLATE_PADRAO.assunto,
+    body: MAILTO.renderTemplate(TEMPLATE_PADRAO.corpo, {
+      nome: 'parlamentar(s)', partido: '', uf: 'SP', meu_nome: 'Teste', minha_cidade: 'São Paulo'
+    })
+  });
+  assert.ok(url.length <= MAILTO.MAX_URL_LENGTH, `URL de ${url.length} chars estourou o limite`);
 });
 
 test('chunkRecipients com lista menor que o chunk devolve um único lote', () => {

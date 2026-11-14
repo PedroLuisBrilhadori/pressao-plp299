@@ -109,16 +109,15 @@
         </div>
       </div>
 
-      <h2>3. Envie em lote</h2>
+      <h2>3. Envie em lote para todos os deputados e senadores</h2>
       <p class="hint">
-        Cada botão abaixo é <strong>uma parte da sua bancada</strong> (12 destinatários por vez, para não travar seu app de e-mail).
-        Clique numa parte → o app de e-mail escolhido abre com a mensagem já pronta → <strong>confirme o envio lá</strong> → volte e clique na próxima parte.
-        Usa Gmail, Outlook ou Yahoo? Escolha em “Abrir com” — abre o compose direto no navegador, sem configurar nada no sistema.
-        Se o seu navegador bloquear o app de e-mail, use o botão <em>copiar</em> ao lado de cada parte.
+        Um clique e o app escolhido abre com <strong>toda a bancada do seu estado</strong> como destinatária e a mensagem já pronta — <strong>só confirme o envio lá</strong>.
+        Usa Gmail, Outlook ou Yahoo? Escolha em “Abrir com” — o compose abre direto no navegador, sem configurar nada no sistema.
+        Se o seu navegador bloquear o app de e-mail, use o botão <em>copiar</em> ao lado.
       </p>
       <div class="batch-box">
         <div class="batch-controls">
-          <label>Abrir com
+          <label class="field">Abrir com
             <select id="modo-envio">
               <option value="mailto">Meu app de e-mail</option>
               <option value="gmail">Gmail (web)</option>
@@ -126,8 +125,6 @@
               <option value="yahoo">Yahoo (web)</option>
             </select>
           </label>
-          <label><input type="checkbox" id="incluir-senadores"> <span id="senadores-label">incluir os 3 senadores do meu estado</span></label>
-          <label><input type="checkbox" id="usar-selecao"> usar minha seleção personalizada (<span id="selecao-contagem">0</span> selecionados)</label>
           <button id="copy-emails" class="btn btn-ghost btn-small">Copiar todos os e-mails</button>
           <button id="reset-progresso" class="btn btn-ghost btn-small">Zerar progresso</button>
         </div>
@@ -136,15 +133,15 @@
         <div id="chunks" class="chunks"></div>
       </div>
 
-      <h2>4. Ou envie individualmente (e monte um lote personalizado)</h2>
+      <h2>4. Ou monte seu próprio lote, quem você escolher</h2>
       <p class="hint">
-        Marque <strong>“incluir no lote”</strong> nos cards que quiser — por um partido inteiro (use o filtro e selecione os filtrados) ou um por um —
-        e ative <strong>“usar minha seleção personalizada”</strong> no passo 3 para o lote enviar só para quem você escolheu.
+        <strong>Clique nos cards abaixo para selecionar</strong> deputados e senadores — um por um, um partido inteiro com o filtro, ou quem você quiser pressionar de perto.
+        Sua lista vira um lote de envio logo abaixo, só com quem você escolheu.
       </p>
       <div class="sel-row">
-        <button id="sel-filtrados" class="btn btn-ghost btn-small">Selecionar todos os filtrados</button>
-        <button id="sel-limpar" class="btn btn-ghost btn-small">Limpar seleção</button>
-        <span id="selecao-status" class="hint"></span>
+        <button id="sel-filtrados" class="chip">Selecionar todos os filtrados</button>
+        <button id="sel-limpar" class="chip chip-ghost">Limpar seleção</button>
+        <span id="selecao-status" class="pill">Nenhum selecionado</span>
       </div>
       <div class="filtros">
         <input id="busca" type="search" placeholder="Buscar por nome…">
@@ -157,6 +154,10 @@
       </div>
       <p id="lista-contagem" class="hint"></p>
       <div id="parlamentares" class="cards"></div>
+      <div id="lote-personalizado" class="batch-box batch-box-compacto" hidden>
+        <h3>Seu lote personalizado</h3>
+        <div id="chunks-selecao" class="chunks"></div>
+      </div>
     </section>
 
     <section id="share" class="section section-alt">

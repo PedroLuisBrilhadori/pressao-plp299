@@ -36,12 +36,22 @@
     });
   }
 
-  /** Divide a lista de parlamentares em lotes para envio sequencial. */
+  /** Divide a lista de parlamentares em lotes BALANCEADOS (diferença de
+   * no máx. 1 destinatário entre lotes) com teto de `size`. Evita o
+   * "solitário" tipo 6 lotes de 12 + 1 lote de 1. */
   function chunkRecipients(parlamentares, size) {
     var n = size || CHUNK_SIZE;
+    var total = parlamentares.length;
+    if (!total) return [];
+    var nLotes = Math.ceil(total / n);
+    var base = Math.floor(total / nLotes);
+    var resto = total % nLotes;
     var chunks = [];
-    for (var i = 0; i < parlamentares.length; i += n) {
-      chunks.push(parlamentares.slice(i, i + n));
+    var i = 0;
+    for (var c = 0; c < nLotes; c++) {
+      var qtd = base + (c < resto ? 1 : 0);
+      chunks.push(parlamentares.slice(i, i + qtd));
+      i += qtd;
     }
     return chunks;
   }

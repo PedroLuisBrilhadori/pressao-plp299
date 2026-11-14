@@ -211,8 +211,38 @@ a { color: var(--accent-2); }
 
 /* ---------- filtros e cards ---------- */
 .filtros { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.sel-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.chip {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.15s ease, border-color 0.15s ease;
+}
+.chip:hover { border-color: var(--accent-2); filter: brightness(1.15); }
+.chip-ghost { background: transparent; }
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(124, 92, 255, 0.12);
+  border: 1px solid var(--accent-2);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent-2);
+}
+.pill.pill-vazia { border-color: var(--border); color: var(--text-dim); background: transparent; }
+
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
 .card {
+  position: relative;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -220,8 +250,35 @@ a { color: var(--accent-2); }
   display: flex;
   flex-direction: column;
   gap: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+  overflow: hidden;
 }
-.card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.card:hover { border-color: var(--accent-2); transform: translateY(-1px); }
+.card:active { transform: translateY(0); }
+.card.selecionado {
+  border-color: var(--accent-2);
+  background: rgba(124, 92, 255, 0.08);
+  box-shadow: 0 0 0 1px var(--accent-2);
+}
+.card-check {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--border);
+  border-radius: 0 0 0 100%;
+  transition: background 0.15s ease;
+}
+.card.selecionado .card-check { background: var(--accent-2); }
+.card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding-right: 24px; }
 .card-nome { font-weight: 600; font-size: 0.95rem; }
 .card-partido {
   font-size: 0.72rem;
@@ -234,20 +291,6 @@ a { color: var(--accent-2); }
 .card-actions { display: flex; gap: 8px; }
 .card-actions a, .card-actions button { flex: 1; text-align: center; }
 .card-casa { font-size: 0.72rem; color: var(--text-dim); }
-.card.selecionado { border-color: var(--accent-2); box-shadow: 0 0 0 1px var(--accent-2); }
-.card-lote {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.78rem;
-  color: var(--text-dim);
-  cursor: pointer;
-}
-.card-lote input { accent-color: var(--accent-2); }
-.sel-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-.sel-row .hint { margin-bottom: 0; }
-.chunk-group { display: inline-flex; align-items: stretch; gap: 8px; }
-.chunk-copy { align-self: center; }
 
 /* ---------- share/footer ---------- */
 .share-row { display: flex; gap: 12px; flex-wrap: wrap; }
