@@ -95,9 +95,43 @@ a { color: var(--accent-2); }
 /* ---------- vídeos ---------- */
 .videos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 .video-card h3 { font-size: 1rem; margin: 12px 0 8px; }
+.video-link { font-size: 0.78rem; font-weight: 400; margin-left: 8px; white-space: nowrap; }
 .video-embed { aspect-ratio: 16/9; border-radius: var(--radius); overflow: hidden; background: var(--card); }
 .video-embed iframe { width: 100%; height: 100%; border: 0; }
-.video-fallback { display: flex; align-items: center; justify-content: center; height: 100%; padding: 16px; text-align: center; }
+.video-facade {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+  background: #000;
+}
+.video-facade img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.85;
+  transition: opacity 0.15s ease;
+}
+.video-facade:hover img { opacity: 1; }
+.video-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 1.2rem;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+}
 .quotes { list-style: none; margin-top: 8px; }
 .quotes li {
   font-size: 0.9rem;
@@ -200,6 +234,20 @@ a { color: var(--accent-2); }
 .card-actions { display: flex; gap: 8px; }
 .card-actions a, .card-actions button { flex: 1; text-align: center; }
 .card-casa { font-size: 0.72rem; color: var(--text-dim); }
+.card.selecionado { border-color: var(--accent-2); box-shadow: 0 0 0 1px var(--accent-2); }
+.card-lote {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.card-lote input { accent-color: var(--accent-2); }
+.sel-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.sel-row .hint { margin-bottom: 0; }
+.chunk-group { display: inline-flex; align-items: stretch; gap: 8px; }
+.chunk-copy { align-self: center; }
 
 /* ---------- share/footer ---------- */
 .share-row { display: flex; gap: 12px; flex-wrap: wrap; }

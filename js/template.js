@@ -4,7 +4,7 @@
 (function (root) {
   'use strict';
 
-  var ASSUNTO = 'Vote NO no PLP 299/2026 — sua eleitora e seu eleitor estão acompanhando';
+  var ASSUNTO = 'Vote NÃO no PLP 299/2026 — sua eleitora e seu eleitor estão acompanhando';
 
   var CORPO = [
     'Prezado(a) {nome},',
@@ -20,7 +20,7 @@
     '3. O Senado já aprovou o texto-base por 45 a 31 — cabe à Câmara representar o interesse de quem elegeu seus deputados, e não apenas o mapa do ajuste fiscal;',
     '4. Eleitores de todo o país estão organizados e acompanhando o voto de cada parlamentar nesta matéria.',
     '',
-    'Estou acompanhando a votação individual e conto com seu voto NO no PLP 299/2026.',
+    'Estou acompanhando a votação individual e conto com seu voto NÃO no PLP 299/2026.',
     '',
     'Com atenção,',
     '{meu_nome} — eleitor(a) de {minha_cidade} ({uf})'

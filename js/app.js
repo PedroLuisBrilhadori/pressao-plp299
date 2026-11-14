@@ -21,7 +21,8 @@
     uf: 'plp299.uf',
     template: 'plp299.template',
     perfil: 'plp299.perfil',
-    progresso: 'plp299.progresso'
+    progresso: 'plp299.progresso',
+    selecao: 'plp299.selecao'
   };
 
   var state = {
@@ -29,6 +30,7 @@
     template: null, // {assunto, corpo} — null = padrão
     perfil: { meu_nome: '', minha_cidade: '' },
     enviados: {}, // chave "email" -> true
+    selecao: {}, // chave "email" -> true (lote personalizado)
     chunkSize: MAILTO.CHUNK_SIZE
   };
 
@@ -43,6 +45,8 @@
       if (p) state.perfil = JSON.parse(p);
       var pr = localStorage.getItem(LS.progresso);
       if (pr) state.enviados = JSON.parse(pr);
+      var se = localStorage.getItem(LS.selecao);
+      if (se) state.selecao = JSON.parse(se);
     } catch (e) {
       console.warn('localStorage indisponível/inválido, usando padrões', e);
     }
@@ -59,6 +63,9 @@
   }
   function salvarProgresso() {
     try { localStorage.setItem(LS.progresso, JSON.stringify(state.enviados)); } catch (e) { /* noop */ }
+  }
+  function salvarSelecao() {
+    try { localStorage.setItem(LS.selecao, JSON.stringify(state.selecao)); } catch (e) { /* noop */ }
   }
 
   // ---------- helpers ----------
@@ -86,11 +93,35 @@
 
   function todosSelecionados() {
     if (!state.uf) return [];
+    // lote personalizado: só quem o usuário marcou nos cards (senadores
+    // entram pela seleção individual; o checkbox de senadores vale no modo padrão)
+    if ($('usar-selecao').checked) {
+      return bancadaUf().filter(function (p) {
+        return p.email && state.selecao[p.email];
+      });
+    }
     var lista = MAILTO.porUf(PARLAMENTARES.deputados, state.uf);
     if ($('incluir-senadores').checked) {
       lista = lista.concat(MAILTO.porUf(PARLAMENTARES.senadores, state.uf));
     }
     return lista;
+  }
+
+  /** Atualiza contador/desabilitar do modo personalizado e o status na seção 4. */
+  function atualizarControleSelecao() {
+    var total = Object.keys(state.selecao).length;
+    $('selecao-contagem').textContent = total;
+    var chk = $('usar-selecao');
+    if (total === 0) {
+      chk.checked = false;
+      chk.disabled = true;
+    } else {
+      chk.disabled = false;
+    }
+    $('selecao-status').textContent = total === 0
+      ? 'Nenhum parlamentar selecionado — marque “incluir no lote” nos cards abaixo.'
+      : total + ' no lote personalizado.';
+    void chk; // estado do checkbox lido via DOM em todosSelecionados()
   }
 
   /** Bancada completa da UF (inclui quem não tem e-mail público —
@@ -112,15 +143,24 @@
     });
     sel.value = state.uf;
     atualizarResumoUf();
+    atualizarSenadoresLabel();
     sel.addEventListener('change', function () {
       state.uf = sel.value;
       salvarUf();
       atualizarResumoUf();
+      atualizarSenadoresLabel();
       $('filtro-partido').value = '';
       reconstruirPartidos();
       renderChunks();
       renderCards();
     });
+  }
+
+  /** Label do checkbox de senadores reflete o estado escolhido. */
+  function atualizarSenadoresLabel() {
+    $('senadores-label').textContent = state.uf
+      ? 'incluir os 3 senadores do estado (' + UF_NOMES[state.uf] + ')'
+      : 'incluir os 3 senadores do meu estado';
   }
 
   function reconstruirPartidos() {
@@ -204,6 +244,10 @@
       renderChunks();
       renderCards();
     });
+    $('usar-selecao').addEventListener('change', function () {
+      renderChunks();
+      renderCards();
+    });
     $('reset-progresso').addEventListener('click', function () {
       state.enviados = {};
       salvarProgresso();
@@ -214,6 +258,7 @@
       var emails = todosSelecionados().map(function (p) { return p.email; });
       copiarTexto(emails.join(', '), this);
     });
+    atualizarControleSelecao();
     renderChunks();
   }
 
@@ -252,6 +297,8 @@
         }
         throw e;
       }
+      var grupo = document.createElement('span');
+      grupo.className = 'chunk-group';
       var btn = document.createElement('a');
       btn.className = 'btn chunk-btn ' + (completo ? 'btn sent' : 'btn-primary');
       btn.href = url;
@@ -267,10 +314,26 @@
         // deixa o client de e-mail abrir antes de re-renderizar
         setTimeout(function () { renderChunks(); renderCards(); }, 600);
       });
-      container.appendChild(btn);
+      grupo.appendChild(btn);
+      grupo.appendChild(criarBotaoCopiar(chunk, btn));
+      container.appendChild(grupo);
     });
 
     renderProgresso(total);
+  }
+
+  /** Fallback por parte: copia os e-mails do chunk (p/ quando o navegador
+   * bloquear o mailto ou o usuário preferir colar no app de e-mail). */
+  function criarBotaoCopiar(chunk, btnReferencia) {
+    var copiar = document.createElement('button');
+    copiar.className = 'btn btn-ghost btn-small chunk-copy';
+    copiar.textContent = 'copiar';
+    copiar.title = 'Copiar os e-mails desta parte';
+    copiar.addEventListener('click', function () {
+      copiarTexto(chunk.map(function (p) { return p.email; }).join(', '), copiar);
+      void btnReferencia;
+    });
+    return copiar;
   }
 
   function criarBotaoChunk(chunk, label, container) {
@@ -304,6 +367,20 @@
     $('busca').addEventListener('input', renderCards);
     $('filtro-partido').addEventListener('change', renderCards);
     $('filtro-casa').addEventListener('change', renderCards);
+    $('sel-filtrados').addEventListener('click', function () {
+      listaFiltrada().forEach(function (p) {
+        if (p.email) state.selecao[p.email] = true;
+      });
+      salvarSelecao();
+      atualizarControleSelecao();
+      renderCards();
+    });
+    $('sel-limpar').addEventListener('click', function () {
+      state.selecao = {};
+      salvarSelecao();
+      atualizarControleSelecao();
+      renderCards();
+    });
     renderCards();
   }
 
@@ -334,9 +411,10 @@
     filtrada.forEach(function (p) {
       var casa = p.casa === 'senado' ? 'Senado' : 'Câmara dos Deputados';
       var enviado = !!state.enviados[p.email];
+      var noLote = !!(p.email && state.selecao[p.email]);
 
       var card = document.createElement('div');
-      card.className = 'card';
+      card.className = 'card' + (noLote ? ' selecionado' : '');
 
       var head = document.createElement('div');
       head.className = 'card-head';
@@ -399,17 +477,38 @@
       actions.appendChild(btnMail);
       actions.appendChild(btnPagina);
 
+      // seleção para o lote personalizado
+      var lote = document.createElement('label');
+      lote.className = 'card-lote';
+      var chkLote = document.createElement('input');
+      chkLote.type = 'checkbox';
+      chkLote.checked = noLote;
+      if (!p.email) chkLote.disabled = true;
+      chkLote.addEventListener('change', function () {
+        if (chkLote.checked) {
+          state.selecao[p.email] = true;
+        } else {
+          delete state.selecao[p.email];
+        }
+        salvarSelecao();
+        card.classList.toggle('selecionado', chkLote.checked);
+        atualizarControleSelecao();
+      });
+      lote.appendChild(chkLote);
+      lote.appendChild(document.createTextNode(' incluir no lote'));
+
       card.appendChild(head);
       card.appendChild(casaEl);
       card.appendChild(email);
       card.appendChild(actions);
+      card.appendChild(lote);
       container.appendChild(card);
     });
   }
 
   // ---------- share ----------
   function initShare() {
-    var msg = 'Vote NO no PLP 299/2026 — envie um e-mail do seu próprio endereço para todos os deputados e senadores de SP: ';
+    var msg = 'Vote NÃO no PLP 299/2026 — envie um e-mail do seu próprio endereço para a bancada do seu estado: ';
     $('whatsapp-share').href = 'https://wa.me/?text=' + encodeURIComponent(msg + window.location.href);
     $('copy-site').addEventListener('click', function () {
       copiarTexto(window.location.href, this);
@@ -436,23 +535,39 @@
     }
   }
 
-  // ---------- embeds de vídeo (facade: só carrega iframe ao clicar) ----------
+  // ---------- embeds de vídeo (facade: thumbnail real + play; iframe só ao clicar) ----------
   function initVideos() {
     document.querySelectorAll('.video-embed').forEach(function (el) {
       var id = el.getAttribute('data-video-id');
-      var link = el.querySelector('.video-fallback');
-      if (!id || !link) return;
-      link.addEventListener('click', function (ev) {
-        ev.preventDefault();
+      if (!id) return;
+
+      var facade = document.createElement('button');
+      facade.type = 'button';
+      facade.className = 'video-facade';
+      facade.setAttribute('aria-label', 'Assistir ao vídeo');
+
+      var img = document.createElement('img');
+      img.src = 'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg';
+      img.alt = 'Clique para assistir: prévia do vídeo';
+      img.loading = 'lazy';
+      facade.appendChild(img);
+
+      var play = document.createElement('span');
+      play.className = 'video-play';
+      play.textContent = '▶';
+      facade.appendChild(play);
+
+      facade.addEventListener('click', function () {
         var iframe = document.createElement('iframe');
-        iframe.src = 'https://www.youtube-nocookie.com/embed/' + id +
-          '?autoplay=1&rel=0';
+        iframe.src = 'https://www.youtube.com/embed/' + id + '?autoplay=1&rel=0';
         iframe.title = 'Vídeo da campanha';
         iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
         iframe.allowFullscreen = true;
         el.innerHTML = '';
         el.appendChild(iframe);
       });
+
+      el.appendChild(facade);
     });
   }
 

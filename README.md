@@ -1,6 +1,6 @@
 # pressao-plp299
 
-Campanha popular para pressionar parlamentares a votarem **NO no PLP 299/2026**
+Campanha popular para pressionar parlamentares a votarem **NÃO no PLP 299/2026**
 (pacote fiscal: teto de despesas 2,5% → 2%, impacto de até R$ 56 bi em 2027 —
 texto-base aprovado no Senado por 45×31). O visitante **escolhe seu estado** e o
 site monta os e-mails para a **bancada da sua UF** (513 deputados + 81 senadores
