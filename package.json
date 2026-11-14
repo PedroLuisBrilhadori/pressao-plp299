@@ -1,0 +1,12 @@
+{
+  "name": "pressao-plp299",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Campanha popular: vote NO no PLP 299/2026 — e-mails aos parlamentares de SP a partir do próprio e-mail do visitante",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node --test",
+    "check": "node scripts/gerar-dados.mjs --check",
+    "regenerar-dados": "node scripts/gerar-dados.mjs"
+  }
+}
