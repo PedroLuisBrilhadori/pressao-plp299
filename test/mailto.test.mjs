@@ -112,3 +112,28 @@ test('porUf com UF vazia ou lista vazia devolve vazio (não quebra)', () => {
   assert.deepEqual(MAILTO.porUf(parlamentares, undefined), []);
   assert.deepEqual(MAILTO.porUf([], 'SP'), []);
 });
+
+test('buildWebmail gmail monta compose com to, su e body codificados', () => {
+  const url = MAILTO.buildWebmail('gmail', {
+    emails: ['dep@camara.leg.br'],
+    subject: 'Vote NÃO no PLP 299',
+    body: 'Prezado(a) parlamentar,\n\nvoto NÃO.'
+  });
+  assert.ok(url.startsWith('https://mail.google.com/mail/?view=cm&fs=1&to=dep%40camara.leg.br&su='));
+  assert.ok(url.includes('%3F') || url.includes('Vote%20N'));
+  assert.ok(url.length < MAILTO.MAX_URL_LENGTH);
+});
+
+test('buildWebmail outlook e yahoo usam os deep links corretos', () => {
+  const opts = { emails: ['dep@camara.leg.br'], subject: 'assunto', body: 'corpo' };
+  assert.ok(MAILTO.buildWebmail('outlook', opts).startsWith('https://outlook.office.com/mail/deeplink/compose?to='));
+  assert.ok(MAILTO.buildWebmail('yahoo', opts).startsWith('https://compose.mail.yahoo.com/?to='));
+});
+
+test('buildWebmail rejeita modo desconhecido; buildMensagem delega para mailto', () => {
+  const opts = { emails: ['dep@camara.leg.br'], subject: 's', body: 'b' };
+  assert.throws(() => MAILTO.buildWebmail('proton', opts), /desconhecido/);
+  assert.ok(MAILTO.buildMensagem('mailto', opts).startsWith('mailto:'));
+  assert.ok(MAILTO.buildMensagem(undefined, opts).startsWith('mailto:'));
+  assert.ok(MAILTO.buildMensagem('gmail', opts).startsWith('https://mail.google.com/'));
+});

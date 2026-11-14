@@ -17,8 +17,11 @@
     SE: 'Sergipe', TO: 'Tocantins'
   };
 
+  var MODOS_ENVIO = ['mailto', 'gmail', 'outlook', 'yahoo'];
+
   var LS = {
     uf: 'plp299.uf',
+    envio: 'plp299.envio',
     template: 'plp299.template',
     perfil: 'plp299.perfil',
     progresso: 'plp299.progresso',
@@ -27,6 +30,7 @@
 
   var state = {
     uf: '',
+    envio: 'mailto', // mailto | gmail | outlook | yahoo
     template: null, // {assunto, corpo} — null = padrão
     perfil: { meu_nome: '', minha_cidade: '' },
     enviados: {}, // chave "email" -> true
@@ -39,6 +43,8 @@
     try {
       var uf = localStorage.getItem(LS.uf);
       if (uf && UF_NOMES[uf]) state.uf = uf;
+      var envio = localStorage.getItem(LS.envio);
+      if (envio && MODOS_ENVIO.indexOf(envio) !== -1) state.envio = envio;
       var t = localStorage.getItem(LS.template);
       if (t) state.template = JSON.parse(t);
       var p = localStorage.getItem(LS.perfil);
@@ -54,6 +60,9 @@
 
   function salvarUf() {
     try { localStorage.setItem(LS.uf, state.uf); } catch (e) { /* private mode */ }
+  }
+  function salvarEnvio() {
+    try { localStorage.setItem(LS.envio, state.envio); } catch (e) { /* private mode */ }
   }
   function salvarTemplate() {
     try { localStorage.setItem(LS.template, JSON.stringify(state.template)); } catch (e) { /* private mode */ }
@@ -240,6 +249,14 @@
 
   // ---------- envio em lote ----------
   function initBatch() {
+    var modo = $('modo-envio');
+    modo.value = state.envio;
+    modo.addEventListener('change', function () {
+      state.envio = modo.value;
+      salvarEnvio();
+      renderChunks();
+      renderCards();
+    });
     $('incluir-senadores').addEventListener('change', function () {
       renderChunks();
       renderCards();
@@ -279,7 +296,7 @@
       var completo = enviadosNoChunk === chunk.length;
       var url;
       try {
-        url = MAILTO.buildMailto({
+        url = MAILTO.buildMensagem(state.envio, {
           emails: chunk.map(function (p) { return p.email; }),
           subject: assuntoPara(chunk[0], true),
           body: corpoPara(chunk[0], true)
@@ -337,7 +354,7 @@
   }
 
   function criarBotaoChunk(chunk, label, container) {
-    var url = MAILTO.buildMailto({
+    var url = MAILTO.buildMensagem(state.envio, {
       emails: chunk.map(function (p) { return p.email; }),
       subject: assuntoPara(chunk[0], true),
       body: corpoPara(chunk[0], true)
@@ -442,7 +459,7 @@
       if (p.email) {
         btnMail = document.createElement('a');
         try {
-          btnMail.href = MAILTO.buildMailto({
+          btnMail.href = MAILTO.buildMensagem(state.envio, {
             emails: [p.email],
             subject: assuntoPara(p, false),
             body: corpoPara(p, false)

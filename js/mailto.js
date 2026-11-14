@@ -60,19 +60,55 @@
    * subjects/body NÃO devem conter quebras de linha cru no assunto
    * (clients rejeitam); o assunto é sanitizado aqui.
    */
-  function buildMailto(options) {
+  function prepararDestinatarios(options) {
     var emails = (options.emails || []).map(normalizarEmail);
     if (!emails.length) throw new Error('Nenhum destinatário informado');
     var assunto = String(options.subject || '').replace(/[\r\n]+/g, ' ').trim();
     var corpo = String(options.body || '');
-    var url =
-      'mailto:' + emails.join(',') +
-      '?subject=' + encodeURIComponent(assunto) +
-      '&body=' + encodeURIComponent(corpo);
+    return { emails: emails, assunto: assunto, corpo: corpo };
+  }
+
+  function verificarLimite(url) {
     if (url.length > MAX_URL_LENGTH) {
-      throw new Error('URL mailto muito longa (' + url.length + ' chars): reduza o corpo ou o lote');
+      throw new Error('URL muito longa (' + url.length + ' chars): reduza o corpo ou o lote');
     }
     return url;
+  }
+
+  function buildMailto(options) {
+    var p = prepararDestinatarios(options);
+    return verificarLimite(
+      'mailto:' + p.emails.join(',') +
+      '?subject=' + encodeURIComponent(p.assunto) +
+      '&body=' + encodeURIComponent(p.corpo)
+    );
+  }
+
+  /** Compose de webmails (Gmail/Outlook/Yahoo) — abre no navegador sem
+   * depender de app de e-mail configurado no sistema operacional. */
+  function buildWebmail(kind, options) {
+    var p = prepararDestinatarios(options);
+    var to = p.emails.join(',');
+    var templates = {
+      gmail: 'https://mail.google.com/mail/?view=cm&fs=1&to={to}&su={su}&body={body}',
+      outlook: 'https://outlook.office.com/mail/deeplink/compose?to={to}&subject={su}&body={body}',
+      yahoo: 'https://compose.mail.yahoo.com/?to={to}&subject={su}&body={body}'
+    };
+    var tpl = templates[kind];
+    if (!tpl) {
+      throw new Error('Modo de envio desconhecido: ' + kind + ' (use mailto, gmail, outlook ou yahoo)');
+    }
+    return verificarLimite(
+      tpl.replace('{to}', encodeURIComponent(to))
+         .replace('{su}', encodeURIComponent(p.assunto))
+         .replace('{body}', encodeURIComponent(p.corpo))
+    );
+  }
+
+  /** URL de envio pelo modo escolhido ('mailto' ou um webmail). */
+  function buildMensagem(kind, options) {
+    if (!kind || kind === 'mailto') return buildMailto(options);
+    return buildWebmail(kind, options);
   }
 
   /** Número de lotes para uma lista (para UI "parte 1 de N"). */
@@ -88,6 +124,8 @@
     chunkRecipients: chunkRecipients,
     renderTemplate: renderTemplate,
     buildMailto: buildMailto,
+    buildWebmail: buildWebmail,
+    buildMensagem: buildMensagem,
     countChunks: countChunks
   };
 });

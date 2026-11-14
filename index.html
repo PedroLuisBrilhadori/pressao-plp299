@@ -112,11 +112,20 @@
       <h2>3. Envie em lote</h2>
       <p class="hint">
         Cada botão abaixo é <strong>uma parte da sua bancada</strong> (12 destinatários por vez, para não travar seu app de e-mail).
-        Clique numa parte → o seu app de e-mail abre com a mensagem já pronta → <strong>confirme o envio lá</strong> → volte e clique na próxima parte.
+        Clique numa parte → o app de e-mail escolhido abre com a mensagem já pronta → <strong>confirme o envio lá</strong> → volte e clique na próxima parte.
+        Usa Gmail, Outlook ou Yahoo? Escolha em “Abrir com” — abre o compose direto no navegador, sem configurar nada no sistema.
         Se o seu navegador bloquear o app de e-mail, use o botão <em>copiar</em> ao lado de cada parte.
       </p>
       <div class="batch-box">
         <div class="batch-controls">
+          <label>Abrir com
+            <select id="modo-envio">
+              <option value="mailto">Meu app de e-mail</option>
+              <option value="gmail">Gmail (web)</option>
+              <option value="outlook">Outlook (web)</option>
+              <option value="yahoo">Yahoo (web)</option>
+            </select>
+          </label>
           <label><input type="checkbox" id="incluir-senadores"> <span id="senadores-label">incluir os 3 senadores do meu estado</span></label>
           <label><input type="checkbox" id="usar-selecao"> usar minha seleção personalizada (<span id="selecao-contagem">0</span> selecionados)</label>
           <button id="copy-emails" class="btn btn-ghost btn-small">Copiar todos os e-mails</button>
