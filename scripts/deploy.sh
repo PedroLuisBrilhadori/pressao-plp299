@@ -37,12 +37,13 @@ command -v jq >/dev/null || { echo "ERRO: jq ausente localmente"; exit 2; }
 ssh -i "$KEY" -o BatchMode=yes -o ConnectTimeout=8 "$DB" "command -v jq >/dev/null" \
   || { echo "ERRO: jq ausente na db01"; exit 2; }
 
-step "empacotar arquivos do site (index.html, css/, js/)"
+step "empacotar arquivos do site (index.html, css/, js/, og-image.png)"
 if [[ $CHECK -eq 1 ]]; then
   echo "  --check: pulado"
 else
+  [[ -f og-image.png ]] || { echo "ERRO: og-image.png ausente — gere o card de preview antes de deployar"; exit 2; }
   TAR="/tmp/plp299nao-site.tar.gz"
-  tar -czf "$TAR" index.html css js
+  tar -czf "$TAR" index.html css js og-image.png
   echo "  $(tar -tzf "$TAR" | grep -c .) arquivos"
 fi
 
